@@ -1,0 +1,170 @@
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+import './App.css';
+
+function App() {
+  // setup state
+  const [courses, setCourses] = useState([]);
+  const [catalog, setCatalog] = useState([]);
+  const [error, setError] = useState("");
+  const [student, setStudent] = useState("");
+  const [className, setClassName] = useState("");
+  const [instructor, setInstructor] = useState("");
+  const [time, setTime] = useState("");
+  const [courseId, setCourseId] = useState("");
+  const [program, setProgram] = useState("");
+
+
+
+  const fetchClasses = async() => {
+    try {      
+      const response = await axios.get("/api/class");
+      console.log("fetching classes response", response);
+      setCourses(response.data.courses);
+      console.log("fetching classes", courses);
+    } catch(error) {
+      setError("error retrieving courses: " + error);
+    }
+  };
+  const fetchCatalog = async() => {
+    try {      
+      const response = await axios.get("/api/catalog");
+      console.log("fetching catalog response", response);
+      setCatalog(response.data.catalogs);
+      console.log("fetching catalog", catalog);
+    } catch(error) {
+      setError("error retrieving catalog: " + error);
+    }
+  };
+  const createClasses = async() => {
+    try {
+      await axios.post("/api/class", {student: student, program: program});
+      console.log("adding a class");
+    } catch(error) {
+      setError("error adding a class: " + error);
+    }
+  };
+  const createCatalog = async() => {
+    try {
+      await axios.post("/api/catalog", {courseId: courseId, className: className, instructor: instructor, time: time });
+      console.log("adding a course");
+    } catch(error) {
+      setError("error adding a course: " + error);
+    }
+  };
+  const deleteOneClass = async(className) => {
+    try {
+      await axios.delete("/api/class/" + className.id);
+      console.log("deleting a class");
+    } catch(error) {
+      setError("error deleting a class" + error);
+    }
+  };
+  const deleteOneCatalog = async(item) => {
+    try {
+      await axios.delete("/api/catalog/" + item.id);
+      console.log("deleting a catalog");
+    } catch(error) {
+      setError("error deleting a catalog" + error);
+    }
+  };
+
+  // fetch ticket data
+  useEffect(() => {
+    fetchCatalog();
+  },[]);
+  useEffect(() => {
+    fetchClasses();
+  },[]);
+
+
+  const addClass = async(e) => {
+    e.preventDefault();
+    await createClasses();
+    fetchClasses();
+    setStudent("");
+    setProgram("");
+  };
+  const addCatalog = async(e) => {
+    e.preventDefault();
+    await createCatalog();
+    fetchCatalog();
+    setCourseId("");
+    setClassName("");
+    setInstructor("");
+    setTime("");
+  };
+
+  const deleteClass = async(className) => {
+    await deleteOneClass(className);
+    fetchClasses();
+  };
+  const deleteCatalog = async(item) => {
+    await deleteOneCatalog(item);
+    fetchCatalog();
+  };
+
+  // render results
+  return (
+    <div className="App">
+      {error}
+      <div className="addClass">
+      <h1>Add a Course</h1>
+      <form onSubmit={addCatalog}>
+        <div>
+          <label>CourseID:<input type="text" value={courseId} onChange={e => setCourseId(e.target.value)} /></label>
+          <label>Course:<input value={className} onChange={e => setClassName(e.target.value)}></input></label>
+        </div>
+        <div>
+          <label>Instructor:<input type="text" value={instructor} onChange={e => setInstructor(e.target.value)} /></label>
+          <label>Time:<input value={time} onChange={e => setTime(e.target.value)}></input></label>
+        </div>
+        <input type="submit" value="Submit" />
+      </form>
+      
+      <h1>Courses Offered</h1>
+      <div className="courses">
+      {catalog && catalog.map( item => (
+        <div key={item.id} className="item">
+          <div className="className">
+            <p>{item.courseId}: {item.className} @ {item.time} with {item.instructor}</p>
+          </div>
+        </div>
+      ))}
+      </div>
+
+      </div>
+      
+      <div className ="addclass">
+      <h1>Add a Class</h1>
+      <form onSubmit={addClass}>
+        <div>
+          <label>Name:<input type="text" value={student} onChange={e => setStudent(e.target.value)} /></label>
+          <label>Course:<input value={program} onChange={e => setProgram(e.target.value)}></input></label>
+        </div>
+        <input type="submit" value="Submit" />
+      </form>
+      </div>
+      
+      <div className="Schedule">
+      <h1>Students Enrolled</h1>
+      {courses && courses.map( (course) => (
+        <div key={course.id} className="course">
+          <div className="className">
+            <p>{course.student} is taking {course.program}      
+            <button onClick={e => deleteClass(course)}>Unenroll</button></p>
+          </div>
+        </div>
+      ))} 
+      </div>
+      
+      <h2>Have a Great Semester!</h2>
+      
+      <div>
+        <footer id="footer">My github repository: <a href="https://github.com/Rebekah-Dayton/creativeproject4.git">https://github.com/Rebekah-Dayton/creativeproject4.git</a></footer>
+        </div>
+    </div>
+  );
+}
+
+export default App;
